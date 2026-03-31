@@ -15,8 +15,8 @@ jobs:
       - name: Download and extract OpenWrt SDK
         run: |
           wget -q "https://downloads.openwrt.org/releases/24.10.1/targets/mediatek/filogic/openwrt-sdk-24.10.1-mediatek-filogic_gcc-13.3.0_musl.Linux-x86_64.tar.zst"
-          tar --zstd -xf openwrt-sdk-*.tar.zst
-          mv openwrt-sdk-* sdk
+          tar --zstd -xf openwrt-sdk-24.10.1-mediatek-filogic_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+          mv openwrt-sdk-24.10.1-mediatek-filogic_gcc-13.3.0_musl.Linux-x86_64 sdk
 
       - name: Prepare mt76 source
         run: |
