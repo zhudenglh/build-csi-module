@@ -54,12 +54,14 @@ jobs:
       - name: Collect and verify modules
         run: |
           mkdir -p output
-          echo "=== Searching for .ko files ==="
-          find openwrt -name "mt7915e.ko" 2>/dev/null
-          find openwrt -name "mt76.ko" -not -path "*/mt76x*" 2>/dev/null
-          find openwrt -name "mt76-connac-lib.ko" 2>/dev/null
-          echo "=== Searching ipk files ==="
-          find openwrt/bin -name "*mt7915*" -o -name "*mt76*" 2>/dev/null | head -10
+          echo "=== Searching for ALL .ko files ==="
+          find openwrt -name "*.ko" 2>/dev/null | grep -i mt76 || echo "No mt76 .ko found"
+          echo "=== Searching ALL ipk files ==="
+          find openwrt -name "*.ipk" 2>/dev/null | grep -i mt76 || echo "No mt76 .ipk found"
+          echo "=== Check build_dir for mt76 ==="
+          find openwrt/build_dir -maxdepth 4 -name "mt76*" -type d 2>/dev/null
+          echo "=== Check for compiled .o files ==="
+          find openwrt -name "mt7915e.o" -o -name "vendor.o" 2>/dev/null | head -5
 
           # Copy ko files
           find openwrt -name "mt7915e.ko" -exec cp {} output/ \; 2>/dev/null || true
