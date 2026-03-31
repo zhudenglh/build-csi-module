@@ -29,8 +29,21 @@ jobs:
 
       - name: Apply CSI patch
         run: |
-          MT76_DIR=$(find sdk/build_dir -type d -name "mt76-*" -path "*/package/*" | head -1)
+          echo "=== Finding mt76 source ==="
+          find sdk/build_dir -type d -name "mt76*" 2>/dev/null | head -10
+          find sdk/build_dir -type d -name "mt7915" 2>/dev/null | head -10
+          echo "=== Try broader search ==="
+          find sdk -type f -name "mcu.c" -path "*/mt7915/*" 2>/dev/null | head -5
+          MT76_DIR=$(find sdk -type f -name "mcu.c" -path "*/mt7915/*" -exec dirname {} \; | head -1 | sed 's|/mt7915$||')
           echo "MT76 source: $MT76_DIR"
+          if [ -z "$MT76_DIR" ]; then
+            echo "mt76 source not found, trying to force prepare..."
+            cd sdk
+            make package/kernel/mt76/prepare V=s QUILT=1 2>&1 | tail -20
+            cd ..
+            MT76_DIR=$(find sdk -type f -name "mcu.c" -path "*/mt7915/*" -exec dirname {} \; | head -1 | sed 's|/mt7915$||')
+            echo "MT76 source after retry: $MT76_DIR"
+          fi
           chmod +x apply_csi_patch.sh
           bash apply_csi_patch.sh "$MT76_DIR"
 
