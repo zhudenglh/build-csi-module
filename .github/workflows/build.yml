@@ -54,17 +54,40 @@ jobs:
       - name: Collect and verify modules
         run: |
           mkdir -p output
-          find openwrt/build_dir -name "mt7915e.ko" -exec cp {} output/ \; 2>/dev/null || true
-          find openwrt/build_dir -name "mt76.ko" -not -path "*/mt76x*" -exec cp {} output/ \; 2>/dev/null || true
-          find openwrt/build_dir -name "mt76-connac-lib.ko" -exec cp {} output/ \; 2>/dev/null || true
-          # Also check in staging
-          find openwrt/staging_dir -name "mt7915e.ko" -exec cp {} output/ \; 2>/dev/null || true
+          echo "=== Searching for .ko files ==="
+          find openwrt -name "mt7915e.ko" 2>/dev/null
+          find openwrt -name "mt76.ko" -not -path "*/mt76x*" 2>/dev/null
+          find openwrt -name "mt76-connac-lib.ko" 2>/dev/null
+          echo "=== Searching ipk files ==="
+          find openwrt/bin -name "*mt7915*" -o -name "*mt76*" 2>/dev/null | head -10
+
+          # Copy ko files
+          find openwrt -name "mt7915e.ko" -exec cp {} output/ \; 2>/dev/null || true
+          find openwrt -name "mt76.ko" -not -path "*/mt76x*" -exec cp {} output/ \; 2>/dev/null || true
+          find openwrt -name "mt76-connac-lib.ko" -exec cp {} output/ \; 2>/dev/null || true
+
+          # Also extract from ipk if ko not found directly
+          if [ ! -f output/mt7915e.ko ]; then
+            IPK=$(find openwrt/bin -name "kmod-mt7915e*.ipk" | head -1)
+            if [ -n "$IPK" ]; then
+              echo "Extracting from ipk: $IPK"
+              cd output && ar x "$IPK" && tar xzf data.tar.gz 2>/dev/null || tar xf data.tar.gz 2>/dev/null
+              find . -name "*.ko" -exec mv {} . \; 2>/dev/null
+              rm -f debian-binary control.tar.* data.tar.* 2>/dev/null
+              cd ..
+            fi
+          fi
 
           echo "=== Built modules ==="
           ls -la output/
 
           echo "=== CSI symbols ==="
-          strings output/mt7915e.ko | grep -i "report_csi\|vendor_csi\|csi_list"
+          if [ -f output/mt7915e.ko ]; then
+            strings output/mt7915e.ko | grep -i "report_csi\|vendor_csi\|csi_list" || echo "No CSI symbols found"
+          else
+            echo "mt7915e.ko not found!"
+            exit 1
+          fi
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
