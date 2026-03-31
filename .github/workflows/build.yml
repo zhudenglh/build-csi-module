@@ -53,6 +53,16 @@ jobs:
           make toolchain/install -j$(nproc) V=s 2>&1 | tail -5
           make target/linux/compile -j$(nproc) V=s 2>&1 | tail -5
 
+      - name: Re-apply CSI patch after kernel build
+        run: |
+          cd openwrt
+          MT76_DIR=$(find $PWD/build_dir -type f -name "mcu.c" -path "*/mt7915/*" -exec dirname {} \; | head -1 | sed 's|/mt7915$||')
+          echo "Re-patching: $MT76_DIR"
+          cd "$GITHUB_WORKSPACE"
+          bash apply_csi_patch.sh "$MT76_DIR"
+          # Touch source files to force recompile
+          touch "$MT76_DIR"/mt7915/*.c "$MT76_DIR"/mt7915/*.h
+
       - name: Build mt76
         run: |
           cd openwrt
