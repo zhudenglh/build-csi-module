@@ -28,12 +28,28 @@ fi
 
 # === Fix mt7915/Makefile ===
 echo "Fixing Makefile..."
+echo "Current Makefile:"
+cat mt7915/Makefile
+
 if ! grep -q "CONFIG_MTK_VENDOR" mt7915/Makefile; then
+    # Try standard pattern first
     sed -i 's/EXTRA_CFLAGS += -DCONFIG_MT76_LEDS/EXTRA_CFLAGS += -DCONFIG_MT76_LEDS -DCONFIG_MTK_VENDOR/' mt7915/Makefile
+    # If still not there, prepend it
+    if ! grep -q "CONFIG_MTK_VENDOR" mt7915/Makefile; then
+        sed -i '1i EXTRA_CFLAGS += -DCONFIG_MTK_VENDOR' mt7915/Makefile
+    fi
 fi
 if ! grep -q "vendor.o" mt7915/Makefile; then
-    sed -i 's/mtk_mcu.o$/mtk_mcu.o vendor.o/' mt7915/Makefile
+    # Try appending to the mt7915e-y line
+    if grep -q "mt7915e-y" mt7915/Makefile; then
+        sed -i '/mt7915e-y/s/$/ vendor.o/' mt7915/Makefile
+    else
+        echo "mt7915e-y += vendor.o" >> mt7915/Makefile
+    fi
 fi
+
+echo "Fixed Makefile:"
+cat mt7915/Makefile
 
 # === Fix mt7915/mcu.c ===
 echo "Fixing mcu.c..."
