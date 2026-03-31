@@ -38,7 +38,7 @@ jobs:
           cd openwrt
           make package/kernel/mt76/prepare V=s 2>&1 | tail -10
 
-          MT76_DIR=$(find build_dir -type f -name "mcu.c" -path "*/mt7915/*" -exec dirname {} \; | head -1 | sed 's|/mt7915$||')
+          MT76_DIR=$(find $PWD/build_dir -type f -name "mcu.c" -path "*/mt7915/*" -exec dirname {} \; | head -1 | sed 's|/mt7915$||')
           echo "MT76 source: $MT76_DIR"
           ls "$MT76_DIR/mt7915/"
 
@@ -54,9 +54,11 @@ jobs:
       - name: Collect and verify modules
         run: |
           mkdir -p output
-          find openwrt/build_dir -name "mt7915e.ko" -exec cp {} output/ \;
-          find openwrt/build_dir -name "mt76.ko" -not -path "*/mt76x*" -exec cp {} output/ \;
-          find openwrt/build_dir -name "mt76-connac-lib.ko" -exec cp {} output/ \;
+          find openwrt/build_dir -name "mt7915e.ko" -exec cp {} output/ \; 2>/dev/null || true
+          find openwrt/build_dir -name "mt76.ko" -not -path "*/mt76x*" -exec cp {} output/ \; 2>/dev/null || true
+          find openwrt/build_dir -name "mt76-connac-lib.ko" -exec cp {} output/ \; 2>/dev/null || true
+          # Also check in staging
+          find openwrt/staging_dir -name "mt7915e.ko" -exec cp {} output/ \; 2>/dev/null || true
 
           echo "=== Built modules ==="
           ls -la output/
