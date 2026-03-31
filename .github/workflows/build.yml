@@ -46,6 +46,13 @@ jobs:
           chmod +x apply_csi_patch.sh
           bash apply_csi_patch.sh "$MT76_DIR"
 
+      - name: Build toolchain and kernel
+        run: |
+          cd openwrt
+          make tools/install -j$(nproc) V=s 2>&1 | tail -5
+          make toolchain/install -j$(nproc) V=s 2>&1 | tail -5
+          make target/linux/compile -j$(nproc) V=s 2>&1 | tail -5
+
       - name: Build mt76
         run: |
           cd openwrt
